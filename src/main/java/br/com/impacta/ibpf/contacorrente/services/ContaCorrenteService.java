@@ -1,5 +1,6 @@
 package br.com.impacta.ibpf.contacorrente.services;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +66,22 @@ public class ContaCorrenteService {
 		}
 
 		return listaLancamentosSaldo;
+	}
+
+	public Lancamento postLancamentoDeb(Long contaId, BigDecimal valor, String descricao) {
+
+		Lancamento lancamentoDeb = lancamentoFeignClient.transfDeb(contaId, valor, descricao).getBody();
+		contaSaldoFeignClient.lancDeb(contaId, valor).getBody();
+
+		return lancamentoDeb;
+	}
+
+	public Lancamento postLancamentoCre(Long contaId, BigDecimal valor, String descricao) {
+
+		Lancamento lancamentoCre = lancamentoFeignClient.transfCre(contaId, valor, descricao).getBody();
+		contaSaldoFeignClient.lancCre(contaId, valor).getBody();
+
+		return lancamentoCre;
 	}
 
 }
