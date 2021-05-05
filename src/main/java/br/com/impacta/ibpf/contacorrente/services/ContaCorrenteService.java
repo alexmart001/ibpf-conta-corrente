@@ -43,14 +43,16 @@ public class ContaCorrenteService {
 		Conta contaDado = contaFeignClient.findByAgenciaAndConta(agencia, conta).getBody();
 		ContaSaldo contaSaldo = contaSaldoFeignClient.findByContaIni(contaDado.getId()).getBody();
 
-		List<Lancamento> listaLancamentos = lancamentoFeignClient.findByContaId(contaDado.getId());
+		List<Lancamento> listaLancamentos = lancamentoFeignClient.findByContaId(contaDado.getId()).getBody();
 		List<LancamentoSaldo> listaLancamentosSaldo = new ArrayList<>();
 
 		Double saldoCalc = contaSaldo.getSaldo();
 
+		System.out.println(saldoCalc);
+
 		for (Lancamento lanc : listaLancamentos) {
 
-			if (lanc.getTipo() == "C") {
+			if (lanc.getTipo().equals("C")) {
 				saldoCalc = saldoCalc + lanc.getValor();
 			} else {
 				saldoCalc = saldoCalc - lanc.getValor();
@@ -58,6 +60,8 @@ public class ContaCorrenteService {
 
 			LancamentoSaldo lancSaldo = new LancamentoSaldo(contaDado.getAgencia(), contaDado.getConta(), lanc.getData(), lanc.getTipo(), lanc.getOperacao(), lanc
 					.getDescricao(), lanc.getValor(), saldoCalc);
+
+			listaLancamentosSaldo.add(lancSaldo);		
 		}
 
 		return listaLancamentosSaldo;
