@@ -1,5 +1,6 @@
 package br.com.impacta.ibpf.contacorrente.services;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,14 +44,16 @@ public class ContaCorrenteService {
 		Conta contaDado = contaFeignClient.findByAgenciaAndConta(agencia, conta).getBody();
 		ContaSaldo contaSaldo = contaSaldoFeignClient.findByContaIni(contaDado.getId()).getBody();
 
-		List<Lancamento> listaLancamentos = lancamentoFeignClient.findByContaId(contaDado.getId());
+		List<Lancamento> listaLancamentos = lancamentoFeignClient.findByContaId(contaDado.getId()).getBody();
 		List<LancamentoSaldo> listaLancamentosSaldo = new ArrayList<>();
 
 		Double saldoCalc = contaSaldo.getSaldo();
 
+		System.out.println(saldoCalc);
+
 		for (Lancamento lanc : listaLancamentos) {
 
-			if (lanc.getTipo() == "C") {
+			if (lanc.getTipo().equals("C")) {
 				saldoCalc = saldoCalc + lanc.getValor();
 			} else {
 				saldoCalc = saldoCalc - lanc.getValor();
@@ -58,9 +61,27 @@ public class ContaCorrenteService {
 
 			LancamentoSaldo lancSaldo = new LancamentoSaldo(contaDado.getAgencia(), contaDado.getConta(), lanc.getData(), lanc.getTipo(), lanc.getOperacao(), lanc
 					.getDescricao(), lanc.getValor(), saldoCalc);
+
+			listaLancamentosSaldo.add(lancSaldo);		
 		}
 
 		return listaLancamentosSaldo;
+	}
+
+	public Lancamento postLancamentoDeb(Long contaId, BigDecimal valor, String descricao) {
+
+		Lancamento lancamentoDeb = lancamentoFeignClient.transfDeb(contaId, valor, descricao).getBody();
+		contaSaldoFeignClient.lancDeb(contaId, valor).getBody();
+
+		return lancamentoDeb;
+	}
+
+	public Lancamento postLancamentoCre(Long contaId, BigDecimal valor, String descricao) {
+
+		Lancamento lancamentoCre = lancamentoFeignClient.transfCre(contaId, valor, descricao).getBody();
+		contaSaldoFeignClient.lancCre(contaId, valor).getBody();
+
+		return lancamentoCre;
 	}
 
 }
